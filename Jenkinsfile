@@ -11,7 +11,7 @@ pipeline {
 
     environment {
 		GIT_TAG = sh(returnStdout: true,script: 'git describe --tags --always').trim()
-        PROJECT_NAME = "webrtc-server" //"${env.JOB_NAME}" 
+        PROJECT_NAME = "chineseocr" //"${env.JOB_NAME}" 
 		
 		//BRANCH_SHORTNAME = sh(returnStdout: true,script: 'git describe --all').trim()
 
@@ -35,7 +35,8 @@ pipeline {
             steps {
                 sh "ls -lrt && pwd"
 
-				sh "cp -rf ${JENKINS_HOME}/mvnconf/* ${MAVEN_HOME}/conf/"
+		sh "cp -rf ${JENKINS_HOME}/ocr/models ./"
+		sh "cp -rf ${JENKINS_HOME}/ocr/text.weights ./models"
 				
                 //sh "mkdir -p ${JENKINS_HOME}/jenkins_config/"
                 //sh "cp -rf * ${JENKINS_HOME}/jenkins_config/"
@@ -69,9 +70,9 @@ pipeline {
 				    def CURL_CMD=''
                     def CURL_RESULT=''
                     //TODO：prolist需要修改成对应的项目模块和路径
-					def prolist = ['apprtc-server:apprtc-server/'] //['apprtc-server:apprtc-server/','webrtc-build:webrtc-build/']
+					def prolist = ['chineseocr:./'] //['apprtc-server:apprtc-server/','webrtc-build:webrtc-build/']
 					//TODO：SERVER_NAME需要修改成对应的Kuboard的pod值
-			        def SERVER_NAME = "svc-apprtc-server"
+			        def SERVER_NAME = "svc-chineseocr"
 			        def KUBOARD_URL = "http://10.13.32.94:32567/k8s-api/apis/apps/v1/namespaces/video/deployments/${SERVER_NAME}"
                     def WEIXIN_URL = 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key='
                     def WEIXIN_DATA = ''
@@ -96,17 +97,17 @@ pipeline {
 							//发布Docker应用
 							withCredentials([string(credentialsId: 'kuboard-escloud-token', variable: 'ESCLOUD_TOKEN_TEXT')]) {
 								CURL_CMD='curl -X PATCH  -H "content-type: application/strategic-merge-patch+json" -H "'+ESCLOUD_TOKEN_TEXT+'"  -d  "'+escloud_data+'" "'+KUBOARD_URL+'"'
-                                CURL_RESULT = sh label: 'deploy', returnStdout: true, script: CURL_CMD
-                                echo "CURL_RESULT：${CURL_RESULT}"
+                               // CURL_RESULT = sh label: 'deploy', returnStdout: true, script: CURL_CMD
+                               // echo "CURL_RESULT：${CURL_RESULT}"
 							 }
 							 //发送企业微信群通知
             				withCredentials([string(credentialsId: 'jenkins-weixin-robot', variable: 'WEIXIN_KEY')]) {
             				    WEIXIN_DATA = '{\\"msgtype\\": \\"markdown\\",\\"markdown\\":{\\"content\\": \\"项目<font color=\\\\"#FF00FF\\\\">'+proj_name+'</font>部署成功。\\n >Jenkins任务:<font color=\\\\"#FF00FF\\\\">'+PROJECT_NAME+'</font> \\n >环境:<font color=\\\\"#FF00FF\\\\">'+ENV_NAME+'</font> \\n >Docker镜像:<font color=\\\\"#FF00FF\\\\">'+IMAGE_NAME+'</font>\\" }}'
                                 WEIXIN_URL = WEIXIN_URL + WEIXIN_KEY
-            				    CURL_CMD='curl   -H "Content-Type: application/json"   -d  "'+WEIXIN_DATA+'" "'+WEIXIN_URL+'"'
-                                echo "CURL_CMD：${CURL_CMD}"
-                                CURL_RESULT = sh label: 'weixin', returnStdout: true, script: CURL_CMD
-                                echo "CURL_RESULT：${CURL_RESULT}"
+            				   // CURL_CMD='curl   -H "Content-Type: application/json"   -d  "'+WEIXIN_DATA+'" "'+WEIXIN_URL+'"'
+                               // echo "CURL_CMD：${CURL_CMD}"
+                               // CURL_RESULT = sh label: 'weixin', returnStdout: true, script: CURL_CMD
+                               // echo "CURL_RESULT：${CURL_RESULT}"
             				}
 
 						}						
